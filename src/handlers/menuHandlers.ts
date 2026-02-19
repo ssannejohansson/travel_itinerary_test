@@ -1,4 +1,3 @@
-
 import inquirer from "inquirer";
 import type { Activity, Trip, ActivityTemplate } from "../models.js";
 
@@ -16,8 +15,26 @@ import {
 } from "../services/budgetManager.js";
 import { getDestinationInfo } from "../services/destinationService.js";
 
+const promptSelectTrip = async (trips: Trip[]): Promise<Trip | null> => {
+  if (trips.length === 0) {
+    console.log("Please create a trip first.");
+    return null;
+  }
 
+  const { tripId } = await inquirer.prompt<{ tripId: string }>([
+    {
+      type: "rawlist",
+      name: "tripId",
+      message: "Select a trip:",
+      choices: trips.map((trip) => ({
+        name: `${trip.destination} (${trip.startDate.toDateString()})`,
+        value: trip.id,
+      })),
+    },
+  ]);
 
+  return trips.find((trip) => trip.id === tripId) ?? null;
+};
 
 export const handleCreateTrip = async (trips: Trip[]): Promise<void> => {
   const { country } = await inquirer.prompt([
@@ -63,7 +80,8 @@ export const handleAddActivity = async (
   }
 
   // Later: prompt user to pick a trip. For now:
-  const selectedTrip = trips[0];
+  const selectedTrip = await promptSelectTrip(trips);
+  if (!selectedTrip) return;
 
   console.log(`Add activities to your trip to ${selectedTrip.destination}`);
 
@@ -103,7 +121,8 @@ export const handleViewActivitiesByDate = async (
     return;
   }
 
-  const selectedTrip = trips[0];
+  const selectedTrip = await promptSelectTrip(trips);
+  if (!selectedTrip) return;
 
   const { day } = await inquirer.prompt([
     {
@@ -141,7 +160,8 @@ export const handleFilterByCategory = async (trips: Trip[]): Promise<void> => {
     return;
   }
 
-  const selectedTrip = trips[0];
+  const selectedTrip = await promptSelectTrip(trips);
+  if (!selectedTrip) return;
 
   const { category } = await inquirer.prompt([
     {
@@ -173,10 +193,11 @@ export const handleViewBudget = async (trips: Trip[]): Promise<void> => {
     return;
   }
 
-  const selectedTrip = trips[0];
+  const selectedTrip = await promptSelectTrip(trips);
+  if (!selectedTrip) return;
 
   const total = calculateTotalCost(selectedTrip);
-  console.log("Total cost:", total);
+  console.log(`Total cost: ${total}`);
 
   const { highlight } = await inquirer.prompt([
     {
@@ -217,7 +238,8 @@ export const handleShowTripInformation = async (
     return;
   }
 
-  const selectedTrip = trips[0];
+  const selectedTrip = await promptSelectTrip(trips);
+  if (!selectedTrip) return;
   console.log(`Looking up destination info for ${selectedTrip.destination}...`);
 
   try {
@@ -229,11 +251,13 @@ export const handleShowTripInformation = async (
     }
 
     console.log("Destination info:");
-    countries.forEach((c: any) => {
-      const capital = Array.isArray(c.capital)
-        ? c.capital.join(", ")
-        : (c.capital ?? "N/A");
-      console.log(`${c.name} | Capital: ${capital} | Currency: ${c.currency}`);
+    countries.forEach((countryInfo) => {
+      const capital = Array.isArray(countryInfo.capital)
+        ? countryInfo.capital.join(", ")
+        : (countryInfo.capital ?? "N/A");
+      console.log(
+        `${countryInfo.name} | Capital: ${capital} | Currency: ${countryInfo.currency}`,
+      );
     });
     console.log("");
   } catch {

@@ -1,5 +1,5 @@
 import inquirer from "inquirer";
-import type { Trip } from "./models.js";
+import type { Trip, ActivityTemplate } from "./models.js";
 import {
   handleCreateTrip,
   handleAddActivity,
@@ -12,29 +12,29 @@ import {
 // TEST TRIP
 const trips: Trip[] = [];
 
-const activityTemplates = [
+const activityTemplates: ActivityTemplate[] = [
   {
     name: "Flight to Sweden",
     cost: 2000,
-    category: "transport" as const,
+    category: "transport",
     time: "09:00",
   },
   {
     name: "Museum",
     cost: 200,
-    category: "sightseeing" as const,
+    category: "sightseeing",
     time: "11:00",
   },
   { 
     name: "Lunch", 
     cost: 150, 
-    category: "food" as const, 
+    category: "food", 
     time: "13:00" 
 },
   { 
     name: "Zoo", 
     cost: 300, 
-    category: "sightseeing" as const, 
+    category: "sightseeing", 
     time: "16:00" 
 },
 ];
@@ -56,7 +56,7 @@ const mainMenu = async (): Promise<void> => {
           "Create Trip",
           "Add Activity",
           "View Activities (by day)",
-          "Filter activities (cy category)",
+          "Filter activities (by category)",
           "View Budget",
           "Show Destination Info",
           "Exit",
@@ -64,42 +64,36 @@ const mainMenu = async (): Promise<void> => {
       },
     ]);
 
-    if (action === "Create Trip") {
-      await handleCreateTrip(trips);
-    }
+   switch (action) {
+  case "Create Trip":
+    await handleCreateTrip(trips);
+    break;
+  case "Add Activity":
+    await handleAddActivity(trips, activityTemplates);
+    break;
+  case "View Activities (by day)":
+    await handleViewActivitiesByDate(trips);
+    break;
+  case "Filter activities (by category)":
+    await handleFilterByCategory(trips);
+    break;
+  case "View Budget":
+    await handleViewBudget(trips);
+    break;
+  case "Show Destination Info":
+    await handleShowTripInformation(trips);
+    break;
+  case "Exit":
+    console.log("See you next time!");
+    running = false;
+    break;
+}
+}}
 
-    if (action === "Add Activity") {
-      await handleAddActivity(trips, activityTemplates);
-    }
-
-    if (action === "View Activities (by day)") {
-      await handleViewActivitiesByDate(trips);
-    }
-
-    if (action === "Filter activities (cy category)") {
-      await handleFilterByCategory(trips);
-    }
-
-    if (action === "View Budget") {
-        await handleViewBudget(trips);
-    }
-
-    if (action === "Show Destination Info") {
-      await handleShowTripInformation(trips);
-    }
-
-    if (action === "Exit") {
-      console.log("See you next time!");
-      running = false;
-      break;
-    }
-  }
-};
-
-const showMenu = (): void => {
+const showMenu = async (): Promise<void> => {
   console.clear(); // Makes sure the terminal is cleared before the app runs
   console.log("\n ---- TRAVEL ITINERARY ----");
-  mainMenu();
+  await mainMenu();
 };
 
 showMenu();
